@@ -1,0 +1,23 @@
+{
+  "name": "client-practice",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start":"tsx src/index.ts",
+    "validator": "solana-test-validator",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "@solana-program/compute-budget": "^0.15.0",
+    "@solana-program/memo": "^0.11.0",
+    "@solana-program/system": "^0.12.0",
+    "@solana-program/token": "^0.12.0",
+    "@solana/kit": "^6.3.1",
+    "tsx": "^4.21.0"
+  }
+}
