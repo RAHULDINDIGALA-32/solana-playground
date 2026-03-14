@@ -1,8 +1,8 @@
 import type { Client } from "./client"
 import { getCreateAccountInstruction } from "@solana-program/system";
-import { generateKeyPairSigner } from "@solana/kit";
+import { generateKeyPairSigner, createTransactionMessage, pipe, setTransactionMessageFeePayerSigner, setTransactionMessageLifetimeUsingBlockhash, appendTransactionMessageInstructions, appendTransactionMessageInstruction, signTransactionMessageWithSigners, assertIsSendableTransaction, SendableTransaction } from "@solana/kit";
 import { TOKEN_PROGRAM_ADDRESS, getMintSize, getInitializeMintInstruction } from "@solana-program/token";
-import { getSetComputeUnitLimitInstruction, getSetComputeUnitPriceInstruction } from "@solana-program/compute-budget";
+import { getSetComputeUnitLimitInstruction, getSetComputeUnitPriceInstruction, estimateComputeUnitLimitFactory } from "@solana-program/compute-budget";
 
 export async function createMint(client: Client, options: {decimals?: number}= {}) {
 
@@ -28,6 +28,29 @@ export async function createMint(client: Client, options: {decimals?: number}= {
         freezeAuthority: client.wallet.address,
     });
 
+
+    const {value: latestBlockHash } = await client.rpc.getLatestBlockhash().send();
+
+    const transactionMessage = await pipe(
+    createTransactionMessage({version: 0}),
+    (txn) => setTransactionMessageFeePayerSigner(client.wallet, txn),
+    (txn) => setTransactionMessageLifetimeUsingBlockhash(latestBlockHash, txn),
+    (txn) => appendTransactionMessageInstructions([createAccountIxn, initializeMintIxn], txn),
+    (txn) => client.estimateAndSetComputeUnitLimit(txn),
+);
+
+    // const estimateComputeUnitLimit = estimateComputeUnitLimitFactory({rpc: client.rpc});
+    // const computeUnitsEstimate = await estimateComputeUnitLimit(transactionMessage)
+
+    // const transactioMessageWithComputeUnitLimit = appendTransactionMessageInstruction(
+    //     getSetComputeUnitLimitInstruction({ units: computeUnitsEstimate }),
+    //     transactionMessage
+    // )
+
+    const transaction = await signTransactionMessageWithSigners(transactionMessage);
+    assertIsSendableTransaction(transaction);
+    transaction satisfies SendableTransaction;
+
 }
 
 const setComputeLimitIxn = getSetComputeUnitLimitInstruction({
@@ -37,6 +60,8 @@ const setComputeLimitIxn = getSetComputeUnitLimitInstruction({
 const setComputePriceIxn = getSetComputeUnitPriceInstruction({
     microLamports: 10_000,
 });
+
+
 
 
 
