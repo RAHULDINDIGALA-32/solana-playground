@@ -1,6 +1,6 @@
 import type { Client } from "./client"
 import { getCreateAccountInstruction } from "@solana-program/system";
-import { generateKeyPairSigner, createTransactionMessage, pipe, setTransactionMessageFeePayerSigner, setTransactionMessageLifetimeUsingBlockhash, appendTransactionMessageInstructions, appendTransactionMessageInstruction, signTransactionMessageWithSigners, assertIsSendableTransaction, SendableTransaction } from "@solana/kit";
+import { generateKeyPairSigner, createTransactionMessage, pipe, setTransactionMessageFeePayerSigner, setTransactionMessageLifetimeUsingBlockhash, appendTransactionMessageInstructions, appendTransactionMessageInstruction, signTransactionMessageWithSigners, assertIsSendableTransaction, assertIsTransactionWithBlockhashLifetime, SendableTransaction, getSignatureFromTransaction } from "@solana/kit";
 import { TOKEN_PROGRAM_ADDRESS, getMintSize, getInitializeMintInstruction } from "@solana-program/token";
 import { getSetComputeUnitLimitInstruction, getSetComputeUnitPriceInstruction, estimateComputeUnitLimitFactory } from "@solana-program/compute-budget";
 
@@ -49,7 +49,15 @@ export async function createMint(client: Client, options: {decimals?: number}= {
 
     const transaction = await signTransactionMessageWithSigners(transactionMessage);
     assertIsSendableTransaction(transaction);
+    assertIsTransactionWithBlockhashLifetime(transaction);
     transaction satisfies SendableTransaction;
+
+    const signature = getSignatureFromTransaction(transaction);
+    console.log(`Transaction signature: ${signature}`);
+
+    await client.sendAndConfirmTransaction(transaction, { commitment: "confirmed" });
+
+    return mint.address;
 
 }
 

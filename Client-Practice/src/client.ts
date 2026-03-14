@@ -1,5 +1,5 @@
 import { Rpc, RpcSubscriptions, SolanaRpcApi, SolanaRpcSubscriptionsApi } from "@solana/kit"
-import { createSolanaRpc, createSolanaRpcSubscriptions } from "@solana/kit";
+import { createSolanaRpc, createSolanaRpcSubscriptions, sendAndConfirmTransactionFactory } from "@solana/kit";
 import { airdropFactory, lamports, generateKeyPairSigner, MessageSigner, TransactionSigner } from "@solana/kit";
 import { appendTransactionMessageInstruction, TransactionMessage, TransactionMessageWithFeePayer } from '@solana/kit';
 import { estimateComputeUnitLimitFactory, getSetComputeUnitLimitInstruction } from '@solana-program/compute-budget';
@@ -8,6 +8,7 @@ export type Client = {
     estimateAndSetComputeUnitLimit: ReturnType<typeof estimateAndSetComputeUnitLimitFactory>;
     rpc: Rpc<SolanaRpcApi>;
     rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+    sendAndConfirmTransaction: ReturnType<typeof sendAndConfirmTransactionFactory>;
     wallet: TransactionSigner & MessageSigner;
 }
 
@@ -28,8 +29,9 @@ export async function createClient(): Promise<Client> {
         });
 
         const estimateAndSetComputeUnitLimit = estimateAndSetComputeUnitLimitFactory({rpc});
+        const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({rpc, rpcSubscriptions});
 
-        client = { estimateAndSetComputeUnitLimit, rpc, rpcSubscriptions, wallet };
+        client = { estimateAndSetComputeUnitLimit, rpc, rpcSubscriptions, sendAndConfirmTransaction, wallet };
     }
     return client;
 }
